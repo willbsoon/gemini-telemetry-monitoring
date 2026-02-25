@@ -1,0 +1,44 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+connectors:
+  spanmetrics:
+    dimensions:
+      - name: session.id
+      - name: gen_ai.usage.input_tokens
+      - name: gen_ai.usage.output_tokens
+
+exporters:
+  debug:
+    verbosity: basic
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    # 토큰 수와 같은 동적 데이터를 메트릭 라벨로 포함
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger, spanmetrics]
+    metrics:
+      receivers: [otlp, spanmetrics]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # 1. Jaeger (기존 트레이스 뷰어)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=badger # 메모리 대신 디스크(BadgerDB) 사용
+      - BADGER_EPHEMERAL=false # 재시작해도 데이터 유지
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+      - SPAN_STORAGE_RETENTION_TIME=7d # 7일(1주일) 동안만 트레이스 데이터 보관 (롤링)
+    volumes:
+      - ./data/jaeger:/badger # 호스트의 ./data/jaeger 디렉토리에 데이터 저장
+    ports:
+      - "16686:16686" # Jaeger Web UI
+      - "14268:14268" # Jaeger HTTP 수신 포트
+    # 기존 4317/4318은 otel-collector가 사용하므로 내부 통신만 유지
+
+  # 2. OTel Collector (데이터 수집 및 변환)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC (앱에서 전송)
+      - "4318:4318" # OTLP HTTP (앱에서 전송, Gemini CLI)
+      - "8889:8889" # Prometheus exporter 포트
+    depends_on:
+      - jaeger
+
+  # 3. Prometheus (시계열 데이터 저장)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=60d" # 60일(두 달) 동안 메트릭 데이터 보관 (롤링)
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus # 호스트의 ./data/prometheus 디렉토리에 데이터 저장
+    ports:
+      - "9090:9090" # Prometheus UI
+    depends_on:
+      - otel-collector
+
+  # 4. Grafana (그래프/대시보드)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000" # Grafana Web UI
+    volumes:
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana-dashboard-spanmetrics.json:/var/lib/grafana/dashboards/spanmetrics.json
+      - ./data/grafana:/var/lib/grafana # 호스트의 ./data/grafana 디렉토리에 대시보드 변경 사항 저장
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus

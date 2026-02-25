@@ -1,0 +1,385 @@
+{
+  "title": "Gemini CLI 실시간 모니터링 (Token & Session)",
+  "tags": ["gemini", "llm", "tokens", "latency", "cost"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "schemaVersion": 30,
+  "templating": {
+    "list": [
+      {
+        "name": "session_id",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(gemini_cli_api_request_count_total, session_id)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "세션별 누적 입력 토큰 추이 (현재 조회 기간 기준)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]))",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "cumulativeFunctions",
+            "cumulativeFunctions": {
+              "reducer": "total"
+            },
+            "replaceFields": false
+          }
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "세션별 누적 출력 토큰 추이 (현재 조회 기간 기준)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]))",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "cumulativeFunctions",
+            "cumulativeFunctions": {
+              "reducer": "total"
+            },
+            "replaceFields": false
+          }
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "세션별 실시간 입력 토큰 (Tokens/s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]))",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "세션별 실시간 출력 토큰 (Tokens/s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]))",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "세션별 실시간 호출 수 (API Requests/s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gemini_cli_api_request_count_total{session_id=~\"$session_id\"}[1m]))",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "평균 모델 응답 지연 시간 (Model Latency, ms)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (rate(gen_ai_client_operation_duration_seconds_sum{session_id=~\"$session_id\"}[1m])) / sum by (session_id) (rate(gen_ai_client_operation_duration_seconds_count{session_id=~\"$session_id\"}[1m])) * 1000",
+          "legendFormat": "Session: {{session_id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Baseline",
+          "refId": "Baseline"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "transparent"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "최근 상세 트레이스 목록 (Jaeger)",
+      "type": "table",
+      "datasource": "Jaeger",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+      "targets": [
+        {
+          "queryType": "search",
+          "service": "jaeger-all-in-one",
+          "serviceName": "jaeger-all-in-one",
+          "limit": 20
+        }
+      ]
+    }
+  ]
+}
