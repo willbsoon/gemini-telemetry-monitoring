@@ -5,7 +5,7 @@
   "refresh": "5s",
   "schemaVersion": 30,
   "templating": {
-    "list": [
+    "list": [{ "name": "gen_ai_request_model", "type": "query", "datasource": "Prometheus", "query": "label_values(gen_ai_client_token_usage_sum, gen_ai_request_model)", "refresh": 1, "includeAll": true, "multi": true, "allValue": ".*" },
       {
         "name": "session_id",
         "type": "query",
@@ -26,8 +26,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]))",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -94,8 +94,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]))",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -162,8 +162,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]))",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -218,8 +218,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]))",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -274,8 +274,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gemini_cli_api_request_count_total{session_id=~\"$session_id\"}[1m]))",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gemini_cli_api_request_count_total{session_id=~\"$session_id\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -324,8 +324,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 20 },
       "targets": [
         {
-          "expr": "sum by (session_id) (rate(gen_ai_client_operation_duration_seconds_sum{session_id=~\"$session_id\"}[1m])) / sum by (session_id) (rate(gen_ai_client_operation_duration_seconds_count{session_id=~\"$session_id\"}[1m])) * 1000",
-          "legendFormat": "Session: {{session_id}}",
+          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_operation_duration_seconds_sum{session_id=~\"$session_id\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) / sum by (short_session_id) (label_replace(rate(gen_ai_client_operation_duration_seconds_count{session_id=~\"$session_id\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) * 1000",
+          "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
         },
         {
@@ -368,10 +368,218 @@
       }
     },
     {
+      "title": "세션별 사용 모델 타임라인",
+      "type": "state-timeline",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 16, "x": 0, "y": 27 },
+      "targets": [
+        {
+          "expr": "((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-2.5-flash-lite\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 1) or ((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-3-flash-preview\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 2) or ((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-3.1-pro-preview\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 3)",
+          "legendFormat": "Session: {{short_session_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "mergeValues": true,
+        "showValue": "always",
+        "alignValue": "center",
+        "rowHeight": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 80
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": { "text": "gemini-2.5-flash-lite", "color": "blue" },
+                "2": { "text": "gemini-3-flash-preview", "color": "orange" },
+                "3": { "text": "gemini-3.1-pro-preview", "color": "purple" }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "모델별 사용 시간 비율 (조회 기간 기준)",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 27 },
+      "targets": [
+        {
+          "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_operation_duration_seconds_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\"}[$__range]))",
+          "legendFormat": "{{gen_ai_request_model}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["percent"]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "title": "모델별 누적 입력 토큰 사용량 (조회 기간 기준)",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 34 },
+      "targets": [
+        {
+          "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\", gen_ai_token_type=\"input\"}[$__range]))",
+          "legendFormat": "{{gen_ai_request_model}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["percent"]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "title": "모델별 누적 출력 토큰 사용량 (조회 기간 기준)",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 34 },
+      "targets": [
+        {
+          "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\", gen_ai_token_type=\"output\"}[$__range]))",
+          "legendFormat": "{{gen_ai_request_model}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["percent"]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
       "title": "최근 상세 트레이스 목록 (Jaeger)",
       "type": "table",
       "datasource": "Jaeger",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 41 },
       "targets": [
         {
           "queryType": "search",
