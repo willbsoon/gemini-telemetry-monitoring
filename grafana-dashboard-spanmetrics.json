@@ -26,26 +26,19 @@
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
       "targets": [
         {
-          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "expr": "sum by (short_session_id) (label_replace(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}, \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
           "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
+        },
+        {
+          "expr": "sum(max_over_time(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[$__range]))",
+          "legendFormat": "Total (Selected Sessions)",
+          "refId": "Total"
         },
         {
           "expr": "vector(0)",
           "legendFormat": "Baseline",
           "refId": "Baseline"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "cumulativeFunctions",
-            "cumulativeFunctions": {
-              "reducer": "total"
-            },
-            "replaceFields": false
-          }
         }
       ],
       "options": {
@@ -94,26 +87,19 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
       "targets": [
         {
-          "expr": "sum by (short_session_id) (label_replace(rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
+          "expr": "sum by (short_session_id) (label_replace(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}, \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\"))",
           "legendFormat": "Session: {{short_session_id}}",
           "refId": "A"
+        },
+        {
+          "expr": "sum(max_over_time(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[$__range]))",
+          "legendFormat": "Total (Selected Sessions)",
+          "refId": "Total"
         },
         {
           "expr": "vector(0)",
           "legendFormat": "Baseline",
           "refId": "Baseline"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "cumulativeFunctions",
-            "cumulativeFunctions": {
-              "reducer": "total"
-            },
-            "replaceFields": false
-          }
         }
       ],
       "options": {
@@ -368,59 +354,37 @@
       }
     },
     {
-      "title": "세션별 사용 모델 타임라인",
-      "type": "state-timeline",
+      "title": "모델별 실시간 토큰 사용량 (Tokens/s)",
+      "type": "timeseries",
       "datasource": "Prometheus",
-      "gridPos": { "h": 7, "w": 16, "x": 0, "y": 27 },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 27 },
       "targets": [
         {
-          "expr": "((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-2.5-flash-lite\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 1) or ((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-3-flash-preview\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 2) or ((sum by (short_session_id) (label_replace(increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=\"gemini-3.1-pro-preview\"}[1m]), \"short_session_id\", \"$1\", \"session_id\", \".*?(.{6})$\")) > 0) * 0 + 3)",
-          "legendFormat": "Session: {{short_session_id}}",
+          "expr": "sum by (gen_ai_request_model) (rate(gen_ai_client_token_usage_sum{session_id=~\"$session_id\"}[$__rate_interval]))",
+          "legendFormat": "{{gen_ai_request_model}}",
           "refId": "A"
         }
       ],
-      "options": {
-        "mergeValues": true,
-        "showValue": "always",
-        "alignValue": "center",
-        "rowHeight": 0.9,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "lineWidth": 0,
-            "fillOpacity": 80
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10
           },
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "1": { "text": "gemini-2.5-flash-lite", "color": "blue" },
-                "2": { "text": "gemini-3-flash-preview", "color": "orange" },
-                "3": { "text": "gemini-3.1-pro-preview", "color": "purple" }
-              }
-            }
-          ]
+          "unit": "short"
         },
         "overrides": []
       }
     },
     {
-      "title": "모델별 사용 시간 비율 (조회 기간 기준)",
+      "title": "모델별 누적 사용 시간 (초, 조회 기간 기준)",
       "type": "piechart",
       "datasource": "Prometheus",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 27 },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 34 },
       "targets": [
         {
           "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_operation_duration_seconds_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\"}[$__range]))",
@@ -444,36 +408,24 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "calcs": ["percent"]
+          "calcs": ["percent", "sum"]
         }
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
-          }
+          },
+          "unit": "s"
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
-          }
-        ]
+        "overrides": []
       }
     },
     {
-      "title": "모델별 누적 입력 토큰 사용량 (조회 기간 기준)",
+      "title": "모델별 누적 입력 토큰 (Tokens, 조회 기간 기준)",
       "type": "piechart",
       "datasource": "Prometheus",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 34 },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 34 },
       "targets": [
         {
           "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\", gen_ai_token_type=\"input\"}[$__range]))",
@@ -497,7 +449,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "calcs": ["percent"]
+          "calcs": ["percent", "sum"]
         }
       },
       "fieldConfig": {
@@ -506,27 +458,14 @@
             "mode": "palette-classic"
           }
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
-          }
-        ]
+        "overrides": []
       }
     },
     {
-      "title": "모델별 누적 출력 토큰 사용량 (조회 기간 기준)",
+      "title": "모델별 누적 출력 토큰 (Tokens, 조회 기간 기준)",
       "type": "piechart",
       "datasource": "Prometheus",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 34 },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 34 },
       "targets": [
         {
           "expr": "sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_request_model=~\"$gen_ai_request_model\", gen_ai_token_type=\"output\"}[$__range]))",
@@ -550,7 +489,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "calcs": ["percent"]
+          "calcs": ["percent", "sum"]
         }
       },
       "fieldConfig": {
@@ -559,20 +498,7 @@
             "mode": "palette-classic"
           }
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "gemini-2.5-flash-lite" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3-flash-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "gemini-3.1-pro-preview" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
-          }
-        ]
+        "overrides": []
       }
     },
     {
