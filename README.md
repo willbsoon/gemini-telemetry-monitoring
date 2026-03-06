@@ -15,9 +15,9 @@ docker-compose ps
 ```
 
 ### 접속 정보
-* **Grafana (대시보드)**: [http://localhost:3000](http://localhost:3000) (초기 비밀번호: `admin` / `admin` 또는 설정된 비밀번호)
-* **Jaeger (상세 트레이스)**: [http://localhost:16686](http://localhost:16686)
-* **Prometheus (메트릭 쿼리)**: [http://localhost:9090](http://localhost:9090)
+* **Grafana (대시보드)**: [http://localhost:50000](http://localhost:50000) (초기 비밀번호: `admin` / `admin` 또는 설정된 비밀번호)
+* **Jaeger (상세 트레이스)**: [http://localhost:50002](http://localhost:50002)
+* **Prometheus (메트릭 쿼리)**: [http://localhost:50001](http://localhost:50001)
 
 ### 종료 방법
 ```bash

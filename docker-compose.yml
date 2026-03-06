@@ -15,7 +15,7 @@ services:
     volumes:
       - ./data/jaeger:/badger # 호스트의 ./data/jaeger 디렉토리에 데이터 저장
     ports:
-      - "16686:16686" # Jaeger Web UI
+      - "50002:16686" # Jaeger Web UI
       - "14268:14268" # Jaeger HTTP 수신 포트
     # 기존 4317/4318은 otel-collector가 사용하므로 내부 통신만 유지
 
@@ -47,7 +47,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./data/prometheus:/prometheus # 호스트의 ./data/prometheus 디렉토리에 데이터 저장
     ports:
-      - "9090:9090" # Prometheus UI
+      - "50001:9090" # Prometheus UI
     depends_on:
       - otel-collector
 
@@ -56,7 +56,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000" # Grafana Web UI
+      - "50000:3000" # Grafana Web UI
     volumes:
       - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasource.yml
       - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml

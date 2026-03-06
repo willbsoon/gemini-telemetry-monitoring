@@ -36,6 +36,69 @@
   },
   "panels": [
     {
+      "id": 9991,
+      "type": "text",
+      "title": "Gemini API 요금표 (USD / 1M Tokens)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 7
+      },
+      "options": {
+        "content": "# Gemini API Pricing (Long Context)\n\n| 모델명 | 입력(Input) | 출력(Output) |\n|---|---|---|\n| **3.1 Pro** | $4.00 | $18.00 |\n| **1.5 Pro** | $2.50 | $10.00 |\n| **3 Flash** | $1.00 | $6.00 |\n| **2.0 Flash** | $0.20 | $0.80 |\n| **1.5 Flash** | $0.15 | $0.60 |\n| **1.5 Flash-8B** | $0.075 | $0.30 |\n\n> *1M 토큰 기준, 장문 컨텍스트(> 128K/200K) 단가 적용 (보수적 추정)*",
+        "mode": "markdown"
+      },
+      "datasource": null
+    },
+    {
+      "id": 9992,
+      "title": "모델별 예상 청구 요금 (Estimated Cost, USD)",
+      "type": "barchart",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 16,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "((sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*3.1-pro.*\"}[$__range])) * 4.00 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*3-flash.*\"}[$__range])) * 1.00 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*flash-8b.*\"}[$__range])) * 0.075 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*1.5-flash.*\", gen_ai_request_model!~\".*8b.*\"}[$__range])) * 0.15 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*2.0-flash.*\"}[$__range])) * 0.20 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\", gen_ai_request_model=~\".*pro.*\"}[$__range])) * 2.50 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"input\"}[$__range])) * 0)) + on(gen_ai_request_model) ((sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*3.1-pro.*\"}[$__range])) * 18.00 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*3-flash.*\"}[$__range])) * 6.00 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*flash-8b.*\"}[$__range])) * 0.30 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*1.5-flash.*\", gen_ai_request_model!~\".*8b.*\"}[$__range])) * 0.60 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*2.0-flash.*\"}[$__range])) * 0.80 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\", gen_ai_request_model=~\".*pro.*\"}[$__range])) * 10.00 / 1000000) or (sum by (gen_ai_request_model) (increase(gen_ai_client_token_usage_sum{session_id=~\"$session_id\", gen_ai_token_type=\"output\"}[$__range])) * 0))",
+          "legendFormat": "{{gen_ai_request_model}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "title": "기간 내 총 토큰 사용량 (Total Tokens)",
       "type": "stat",
       "datasource": "Prometheus",
@@ -43,7 +106,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 0
+        "y": 7
       },
       "targets": [
         {
@@ -91,7 +154,7 @@
         "h": 7,
         "w": 16,
         "x": 8,
-        "y": 0
+        "y": 7
       },
       "targets": [
         {
@@ -139,7 +202,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 13
+        "y": 20
       },
       "targets": [
         {
@@ -200,7 +263,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 13
+        "y": 20
       },
       "targets": [
         {
@@ -261,7 +324,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 27
       },
       "targets": [
         {
@@ -316,7 +379,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 27
       },
       "targets": [
         {
@@ -371,7 +434,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 34
       },
       "targets": [
         {
@@ -403,7 +466,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 34
+        "y": 41
       },
       "targets": [
         {
@@ -459,7 +522,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 34
+        "y": 41
       },
       "targets": [
         {
@@ -514,7 +577,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 34
+        "y": 41
       },
       "targets": [
         {
@@ -569,7 +632,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 41
+        "y": 48
       },
       "targets": [
         {
@@ -616,7 +679,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 41
+        "y": 48
       },
       "targets": [
         {
@@ -662,7 +725,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 41
+        "y": 48
       },
       "targets": [
         {
@@ -708,7 +771,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 55
       },
       "targets": [
         {
